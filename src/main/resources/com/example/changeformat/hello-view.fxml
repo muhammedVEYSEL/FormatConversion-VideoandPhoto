@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.changeformat.HelloController">
+    <center>
+        <VBox spacing="10" alignment="CENTER">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="Medya Dönüştürücü" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+            <!-- Dosya Sürükle ve Bırak Alanı -->
+            <TextField fx:id="dragAndDropField" promptText="Dosyaları buraya sürükleyin veya seçin" editable="false" />
+            <Button text="Dosya Seçici" onAction="#handleFileChooser" />
+
+            <!-- Dönüştürme Seçenekleri -->
+            <HBox spacing="10" alignment="CENTER">
+                <Label text="Medya Türü:" />
+                <ChoiceBox fx:id="mediaTypeChoiceBox" />
+                <Label text="Girdi Formatı:" />
+                <ChoiceBox fx:id="inputFormatChoiceBox" />
+                <Label text="Çıktı Formatı:" />
+                <ChoiceBox fx:id="outputFormatChoiceBox" />
+            </HBox>
+
+            <!-- Video İçin Çözünürlük ve Kalite Seçenekleri -->
+            <HBox fx:id="videoOptions" spacing="10" alignment="CENTER" visible="false">
+                <Label text="Çözünürlük:" />
+                <ChoiceBox fx:id="resolutionChoiceBox" />
+                <Label text="Kalite:" />
+                <ChoiceBox fx:id="qualityChoiceBox" />
+            </HBox>
+
+            <!-- Görsel İçin Boyut Değiştirme Seçenekleri -->
+            <HBox fx:id="imageOptions" spacing="10" alignment="CENTER" visible="false">
+                <Label text="Yeni Boyut:" />
+                <TextField fx:id="newWidthField" promptText="Genişlik" />
+                <TextField fx:id="newHeightField" promptText="Yükseklik" />
+            </HBox>
+
+            <!-- İlerleme Çubukları Listesi -->
+            <ListView fx:id="progressListView" prefHeight="200" />
+
+            <!-- Dönüştürme Başlat Butonu -->
+            <Button text="Dönüştürmeyi Başlat" onAction="#handleStartConversion" />
+        </VBox>
+    </center>
+</BorderPane>
