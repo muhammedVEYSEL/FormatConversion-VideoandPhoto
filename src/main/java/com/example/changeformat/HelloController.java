@@ -68,13 +68,13 @@ public class HelloController {
 
     private void updateFormatChoices(String mediaType) {
         if ("Video".equals(mediaType)) {
-            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("mp4", "avi", "mov"));
+            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("mp4", "avi", "mov", "flv"));
             outputFormatChoiceBox.setItems(FXCollections.observableArrayList("mp4", "avi", "mov", "flv"));
             videoOptions.setVisible(true);
             imageOptions.setVisible(false);
             setVideoOptions();
         } else if ("Görsel".equals(mediaType)) {
-            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff","jpg"));
+            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff","jpg", "webp"));
             outputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff", "webp","jpg"));
             videoOptions.setVisible(false);
             imageOptions.setVisible(true);
@@ -118,10 +118,10 @@ public class HelloController {
 
         if ("Video".equals(mediaTypeChoiceBox.getValue())) {
             fileChooser.getExtensionFilters().add(new FileChooser.
-                    ExtensionFilter("Video Dosyaları", "*.mp4", "*.avi", "*.mkv", "*.mov"));
+                    ExtensionFilter("Video Dosyaları", "*.mp4", "*.avi", "*.flv", "*.mov"));
         } else if ("Görsel".equals(mediaTypeChoiceBox.getValue())) {
             fileChooser.getExtensionFilters().add(new FileChooser.
-                    ExtensionFilter("Görsel Dosyaları", "*.jpeg", "*.png", "*.bmp", "*.tiff"));
+                    ExtensionFilter("Görsel Dosyaları", "*.jpeg", "*.png", "*.bmp", "*.tiff", "*.jpg", "*.webp"));
         }
 
         File selectedFile = fileChooser.showOpenDialog(new Stage());
@@ -177,14 +177,41 @@ public class HelloController {
     @FXML
     private void convertMediaFile(String inputFilePath, String outputFilePath, String format) {
         try {
-            // FFmpeg komutunu oluştur
             String ffmpegCommand;
+
+            // Medya türüne göre komutu oluştur
             if (outputFilePath.endsWith(".png") || outputFilePath.endsWith(".jpeg") || outputFilePath.endsWith(".bmp")) {
-                // Görseller için özel komut
-                ffmpegCommand = String.format("ffmpeg -i \"%s\" -f image2 \"%s\"", inputFilePath, outputFilePath);
+                // Görsel için boyut değiştirme
+                String newWidth = newWidthField.getText().trim();
+                String newHeight = newHeightField.getText().trim();
+                if (!newWidth.isEmpty() && !newHeight.isEmpty()) {
+                    ffmpegCommand = String.format("ffmpeg -i \"%s\" -vf scale=%s:%s \"%s\"",
+                            inputFilePath, newWidth, newHeight, outputFilePath);
+                } else {
+                    ffmpegCommand = String.format("ffmpeg -i \"%s\" \"%s\"", inputFilePath, outputFilePath);
+                }
             } else {
-                // Videolar için varsayılan komut
-                ffmpegCommand = String.format("ffmpeg -i \"%s\" \"%s\"", inputFilePath, outputFilePath);
+                // Video için çözünürlük ve kalite
+                String resolution = resolutionChoiceBox.getValue();
+                String quality = qualityChoiceBox.getValue();
+
+                // Çözünürlük parametreleri
+                String[] resParts = resolution.split("x");
+                String width = resParts[0];
+                String height = resParts[1];
+
+                // Kalite parametreleri
+                String bitrate = "3M"; // Varsayılan
+                if ("Yüksek".equals(quality)) {
+                    bitrate = "5M";
+                } else if ("Orta".equals(quality)) {
+                    bitrate = "3M";
+                } else if ("Düşük".equals(quality)) {
+                    bitrate = "1M";
+                }
+
+                ffmpegCommand = String.format("ffmpeg -i \"%s\" -vf scale=%s:%s -b:v %s \"%s\"",
+                        inputFilePath, width, height, bitrate, outputFilePath);
             }
 
             // Komutu çalıştır
@@ -192,7 +219,7 @@ public class HelloController {
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-            // Komutun çıktısını oku (isteğe bağlı)
+            // Çıktıyı oku (isteğe bağlı)
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
