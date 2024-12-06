@@ -8,6 +8,8 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import java.io.File;
 
@@ -27,6 +29,7 @@ public class HelloController {
 
     @FXML
     private ListView<String> progressListView;
+
 
     @FXML
     private ChoiceBox<String> resolutionChoiceBox;
@@ -65,14 +68,14 @@ public class HelloController {
 
     private void updateFormatChoices(String mediaType) {
         if ("Video".equals(mediaType)) {
-            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("MP4", "AVI", "MKV", "MOV"));
-            outputFormatChoiceBox.setItems(FXCollections.observableArrayList("MP4", "AVI", "MKV", "MOV", "WMV", "FLV"));
+            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("mp4", "avi", "mov"));
+            outputFormatChoiceBox.setItems(FXCollections.observableArrayList("mp4", "avi", "mov", "flv"));
             videoOptions.setVisible(true);
             imageOptions.setVisible(false);
             setVideoOptions();
         } else if ("Görsel".equals(mediaType)) {
-            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("JPEG", "PNG", "BMP", "TIFF"));
-            outputFormatChoiceBox.setItems(FXCollections.observableArrayList("JPEG", "PNG", "BMP", "TIFF", "GIF", "WEBP"));
+            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff","jpg"));
+            outputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff", "webp","jpg"));
             videoOptions.setVisible(false);
             imageOptions.setVisible(true);
         }
@@ -138,6 +141,8 @@ public class HelloController {
             return;
         }
 
+        String outputFilePath = generateOutputFilePath(filePath, selectedOutputFormat);
+
         if ("Video".equals(mediaTypeChoiceBox.getValue())) {
             String resolution = resolutionChoiceBox.getValue();
             String quality = qualityChoiceBox.getValue();
@@ -150,5 +155,62 @@ public class HelloController {
                     + " (Yeni Boyut: " + newWidth + "x" + newHeight + ")");
         }
         // Burada dönüştürme işlemi başlatılacak
+
+        convertMediaFile(filePath, outputFilePath, selectedOutputFormat);
+    }
+
+    private String generateOutputFilePath(String inputFilePath, String outputFormat) {
+        String userDesktop = System.getProperty("user.home") + File.separator + "Masaüstü"; // Masaüstü yolu
+        String baseName = new File(inputFilePath).getName().replaceFirst("[.][^.]+$", ""); // Dosya adından uzantıyı çıkar
+        String outputFilePath = userDesktop + File.separator + baseName + "_converted." + outputFormat.toLowerCase();
+        int counter = 1;
+
+        // Dosya mevcutsa yeni ad oluştur
+        while (new File(outputFilePath).exists()) {
+            outputFilePath = userDesktop + File.separator + baseName + "_converted(" + counter + ")." + outputFormat.toLowerCase();
+            counter++;
+        }
+
+        return outputFilePath;
+    }
+
+    @FXML
+    private void convertMediaFile(String inputFilePath, String outputFilePath, String format) {
+        try {
+            // FFmpeg komutunu oluştur
+            String ffmpegCommand;
+            if (outputFilePath.endsWith(".png") || outputFilePath.endsWith(".jpeg") || outputFilePath.endsWith(".bmp")) {
+                // Görseller için özel komut
+                ffmpegCommand = String.format("ffmpeg -i \"%s\" -f image2 \"%s\"", inputFilePath, outputFilePath);
+            } else {
+                // Videolar için varsayılan komut
+                ffmpegCommand = String.format("ffmpeg -i \"%s\" \"%s\"", inputFilePath, outputFilePath);
+            }
+
+            // Komutu çalıştır
+            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", ffmpegCommand);
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+
+            // Komutun çıktısını oku (isteğe bağlı)
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            // İşlemin tamamlanmasını bekle
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                System.out.println("Dönüştürme başarıyla tamamlandı!");
+                progressListView.getItems().add("Dönüştürme başarıyla tamamlandı: " + outputFilePath);
+            } else {
+                System.out.println("Dönüştürme sırasında bir hata oluştu.");
+                progressListView.getItems().add("Dönüştürme sırasında bir hata oluştu: " + inputFilePath);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            progressListView.getItems().add("Dönüştürme işlemi başarısız oldu: " + e.getMessage());
+        }
     }
 }
