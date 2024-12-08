@@ -1,5 +1,6 @@
 package com.example.changeformat;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -12,6 +13,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.io.File;
+
+import java.io.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HelloController {
 
@@ -29,7 +34,6 @@ public class HelloController {
 
     @FXML
     private ListView<String> progressListView;
-
 
     @FXML
     private ChoiceBox<String> resolutionChoiceBox;
@@ -49,20 +53,17 @@ public class HelloController {
     @FXML
     private HBox imageOptions;
 
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+
     @FXML
     public void initialize() {
-        // Medya türü seçeneklerini ayarla
         mediaTypeChoiceBox.setItems(FXCollections.observableArrayList("Video", "Görsel"));
         mediaTypeChoiceBox.setValue("Video");
 
-        // Medya türü değiştiğinde format ve seçenekleri güncelle
         mediaTypeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) ->
                 updateFormatChoices(newValue));
 
-        // Varsayılan olarak video formatları ile başlat
         updateFormatChoices("Video");
-
-        // Sürükle ve bırak özelliklerini ayarla
         setupDragAndDrop();
     }
 
@@ -74,8 +75,8 @@ public class HelloController {
             imageOptions.setVisible(false);
             setVideoOptions();
         } else if ("Görsel".equals(mediaType)) {
-            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff","jpg", "webp"));
-            outputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff", "webp","jpg"));
+            inputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff", "jpg", "webp"));
+            outputFormatChoiceBox.setItems(FXCollections.observableArrayList("jpeg", "png", "bmp", "tiff", "webp", "jpg"));
             videoOptions.setVisible(false);
             imageOptions.setVisible(true);
         }
@@ -102,7 +103,6 @@ public class HelloController {
             if (db.hasFiles()) {
                 for (File file : db.getFiles()) {
                     dragAndDropField.setText(file.getAbsolutePath());
-                    // Burada dosyayı işleme alabilirsiniz
                 }
                 success = true;
             }
@@ -154,18 +154,16 @@ public class HelloController {
             progressListView.getItems().add("Görsel Dönüştürme başlatıldı: " + filePath + " -> " + selectedOutputFormat
                     + " (Yeni Boyut: " + newWidth + "x" + newHeight + ")");
         }
-        // Burada dönüştürme işlemi başlatılacak
 
-        convertMediaFile(filePath, outputFilePath, selectedOutputFormat);
+        executorService.submit(() -> convertMediaFile(filePath, outputFilePath, selectedOutputFormat));
     }
 
     private String generateOutputFilePath(String inputFilePath, String outputFormat) {
-        String userDesktop = System.getProperty("user.home") + File.separator + "Masaüstü"; // Masaüstü yolu
-        String baseName = new File(inputFilePath).getName().replaceFirst("[.][^.]+$", ""); // Dosya adından uzantıyı çıkar
+        String userDesktop = System.getProperty("user.home") + File.separator + "Masaüstü";
+        String baseName = new File(inputFilePath).getName().replaceFirst("[.][^.]+$", "");
         String outputFilePath = userDesktop + File.separator + baseName + "_converted." + outputFormat.toLowerCase();
         int counter = 1;
 
-        // Dosya mevcutsa yeni ad oluştur
         while (new File(outputFilePath).exists()) {
             outputFilePath = userDesktop + File.separator + baseName + "_converted(" + counter + ")." + outputFormat.toLowerCase();
             counter++;
@@ -174,70 +172,57 @@ public class HelloController {
         return outputFilePath;
     }
 
-    @FXML
     private void convertMediaFile(String inputFilePath, String outputFilePath, String format) {
         try {
             String ffmpegCommand;
 
-            // Medya türüne göre komutu oluştur
             if (outputFilePath.endsWith(".png") || outputFilePath.endsWith(".jpeg") || outputFilePath.endsWith(".bmp")) {
-                // Görsel için boyut değiştirme
                 String newWidth = newWidthField.getText().trim();
                 String newHeight = newHeightField.getText().trim();
-                if (!newWidth.isEmpty() && !newHeight.isEmpty()) {
-                    ffmpegCommand = String.format("ffmpeg -i \"%s\" -vf scale=%s:%s \"%s\"",
-                            inputFilePath, newWidth, newHeight, outputFilePath);
-                } else {
-                    ffmpegCommand = String.format("ffmpeg -i \"%s\" \"%s\"", inputFilePath, outputFilePath);
-                }
+                ffmpegCommand = !newWidth.isEmpty() && !newHeight.isEmpty()
+                        ? String.format("ffmpeg -i \"%s\" -vf scale=%s:%s \"%s\"", inputFilePath, newWidth, newHeight, outputFilePath)
+                        : String.format("ffmpeg -i \"%s\" \"%s\"", inputFilePath, outputFilePath);
             } else {
-                // Video için çözünürlük ve kalite
                 String resolution = resolutionChoiceBox.getValue();
                 String quality = qualityChoiceBox.getValue();
 
-                // Çözünürlük parametreleri
                 String[] resParts = resolution.split("x");
                 String width = resParts[0];
                 String height = resParts[1];
 
-                // Kalite parametreleri
-                String bitrate = "3M"; // Varsayılan
-                if ("Yüksek".equals(quality)) {
-                    bitrate = "5M";
-                } else if ("Orta".equals(quality)) {
-                    bitrate = "3M";
-                } else if ("Düşük".equals(quality)) {
-                    bitrate = "1M";
-                }
+                String bitrate = "3M";
+                if ("Yüksek".equals(quality)) bitrate = "5M";
+                else if ("Orta".equals(quality)) bitrate = "3M";
+                else if ("Düşük".equals(quality)) bitrate = "1M";
 
                 ffmpegCommand = String.format("ffmpeg -i \"%s\" -vf scale=%s:%s -b:v %s \"%s\"",
                         inputFilePath, width, height, bitrate, outputFilePath);
             }
 
-            // Komutu çalıştır
             ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", ffmpegCommand);
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-            // Çıktıyı oku (isteğe bağlı)
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println(line);
             }
 
-            // İşlemin tamamlanmasını bekle
             int exitCode = process.waitFor();
             if (exitCode == 0) {
-                System.out.println("Dönüştürme başarıyla tamamlandı!");
-                progressListView.getItems().add("Dönüştürme başarıyla tamamlandı: " + outputFilePath);
+                Platform.runLater(() -> progressListView.getItems().add("Dönüştürme tamamlandı: " + outputFilePath));
             } else {
-                System.out.println("Dönüştürme sırasında bir hata oluştu.");
-                progressListView.getItems().add("Dönüştürme sırasında bir hata oluştu: " + inputFilePath);
+                Platform.runLater(() -> progressListView.getItems().add("Hata oluştu: " + inputFilePath));
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            progressListView.getItems().add("Dönüştürme işlemi başarısız oldu: " + e.getMessage());
+            Platform.runLater(() -> progressListView.getItems().add("Dönüştürme başarısız: " + e.getMessage()));
         }
+    }
+
+    @FXML
+    private void onCloseApplication() {
+        executorService.shutdown();
+        System.exit(0);
     }
 }
