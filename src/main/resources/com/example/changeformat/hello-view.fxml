@@ -4,51 +4,52 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-
 <BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.changeformat.HelloController">
+            fx:controller="com.example.changeformat.HelloController" style="-fx-background-color: #f4f4f4;">
     <center>
-        <VBox spacing="10" alignment="CENTER">
+        <VBox spacing="15" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #cccccc; -fx-border-width: 2; -fx-border-radius: 10; -fx-background-radius: 10;">
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
 
-            <Label text="Medya Dönüştürücü" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Label text="Medya Dönüştürücü" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333;" />
 
             <!-- Dosya Sürükle ve Bırak Alanı -->
-            <TextField fx:id="dragAndDropField" promptText="Dosyaları buraya sürükleyin veya seçin" editable="false" />
-            <Button text="Dosya Seçici" onAction="#handleFileChooser" />
+            <TextField fx:id="dragAndDropField" promptText="Dosyaları buraya sürükleyin veya seçin" editable="false"
+                       style="-fx-border-color: #666; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 5;"/>
+            <Button text="Dosya Seçici" onAction="#handleFileChooser" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;"/>
 
             <!-- Dönüştürme Seçenekleri -->
             <HBox spacing="10" alignment="CENTER">
-                <Label text="Medya Türü:" />
-                <ChoiceBox fx:id="mediaTypeChoiceBox" />
-                <Label text="Girdi Formatı:" />
-                <ChoiceBox fx:id="inputFormatChoiceBox" />
-                <Label text="Çıktı Formatı:" />
-                <ChoiceBox fx:id="outputFormatChoiceBox" />
+                <Label text="Medya Türü:" style="-fx-font-size: 14px;"/>
+                <ChoiceBox fx:id="mediaTypeChoiceBox" style="-fx-border-color: #999;"/>
+                <Label text="Girdi Formatı:" style="-fx-font-size: 14px;"/>
+                <ChoiceBox fx:id="inputFormatChoiceBox" style="-fx-border-color: #999;"/>
+                <Label text="Çıktı Formatı:" style="-fx-font-size: 14px;"/>
+                <ChoiceBox fx:id="outputFormatChoiceBox" style="-fx-border-color: #999;"/>
             </HBox>
 
             <!-- Video İçin Çözünürlük ve Kalite Seçenekleri -->
             <HBox fx:id="videoOptions" spacing="10" alignment="CENTER" visible="false">
-                <Label text="Çözünürlük:" />
-                <ChoiceBox fx:id="resolutionChoiceBox" />
-                <Label text="Kalite:" />
-                <ChoiceBox fx:id="qualityChoiceBox" />
+                <Label text="Çözünürlük:" style="-fx-font-size: 14px;"/>
+                <ChoiceBox fx:id="resolutionChoiceBox" style="-fx-border-color: #999;"/>
+                <Label text="Kalite:" style="-fx-font-size: 14px;"/>
+                <ChoiceBox fx:id="qualityChoiceBox" style="-fx-border-color: #999;"/>
             </HBox>
 
             <!-- Görsel İçin Boyut Değiştirme Seçenekleri -->
             <HBox fx:id="imageOptions" spacing="10" alignment="CENTER" visible="false">
-                <Label text="Yeni Boyut:" />
-                <TextField fx:id="newWidthField" promptText="Genişlik" />
-                <TextField fx:id="newHeightField" promptText="Yükseklik" />
+                <Label text="Yeni Boyut:" style="-fx-font-size: 14px;"/>
+                <TextField fx:id="newWidthField" promptText="Genişlik" style="-fx-border-color: #666; -fx-border-radius: 5;"/>
+                <TextField fx:id="newHeightField" promptText="Yükseklik" style="-fx-border-color: #666; -fx-border-radius: 5;"/>
             </HBox>
 
             <!-- İlerleme Çubukları Listesi -->
-            <ListView fx:id="progressListView" prefHeight="200" />
+            <ListView fx:id="progressListView" prefHeight="200" style="-fx-border-color: #666; -fx-border-radius: 5;"/>
 
             <!-- Dönüştürme Başlat Butonu -->
-            <Button text="Dönüştürmeyi Başlat" onAction="#handleStartConversion" />
+            <Button text="Dönüştürmeyi Başlat" onAction="#handleStartConversion"
+                    style="-fx-background-color: #007BFF; -fx-text-fill: white; -fx-font-weight: bold;"/>
         </VBox>
     </center>
 </BorderPane>

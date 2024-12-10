@@ -6,25 +6,17 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.layout.HBox;
+
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
 import java.io.File;
-
-import java.io.*;
+import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class HelloController {
-
-    @FXML
-    private TextField dragAndDropField;
-
-    @FXML
-    private ChoiceBox<String> mediaTypeChoiceBox;
 
     @FXML
     private ChoiceBox<String> inputFormatChoiceBox;
@@ -33,7 +25,13 @@ public class HelloController {
     private ChoiceBox<String> outputFormatChoiceBox;
 
     @FXML
+    private TextField dragAndDropField;
+
+    @FXML
     private ListView<String> progressListView;
+
+    @FXML
+    private ChoiceBox<String> mediaTypeChoiceBox;
 
     @FXML
     private ChoiceBox<String> resolutionChoiceBox;
@@ -65,6 +63,11 @@ public class HelloController {
 
         updateFormatChoices("Video");
         setupDragAndDrop();
+
+        Platform.runLater(() -> {
+            Stage stage = (Stage) dragAndDropField.getScene().getWindow();
+            stage.setOnCloseRequest(event -> onCloseApplication());
+        });
     }
 
     private void updateFormatChoices(String mediaType) {
@@ -139,6 +142,19 @@ public class HelloController {
         if (filePath.isEmpty() || selectedInputFormat == null || selectedOutputFormat == null) {
             progressListView.getItems().add("Lütfen tüm seçenekleri ve dosyayı belirleyin.");
             return;
+        }
+
+        // Medya türü kontrolü
+        if ("Video".equals(mediaTypeChoiceBox.getValue())) {
+            if (!filePath.toLowerCase().endsWith(selectedInputFormat)) {
+                progressListView.getItems().add("Seçilen dosya, belirttiğiniz giriş formatıyla uyuşmuyor.");
+                return;
+            }
+        } else if ("Görsel".equals(mediaTypeChoiceBox.getValue())) {
+            if (!filePath.toLowerCase().endsWith(selectedInputFormat)) {
+                progressListView.getItems().add("Seçilen dosya, belirttiğiniz giriş formatıyla uyuşmuyor.");
+                return;
+            }
         }
 
         String outputFilePath = generateOutputFilePath(filePath, selectedOutputFormat);
