@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -95,7 +96,7 @@ public class HelloController {
     private void setupDragAndDrop() {
         dragAndDropField.setOnDragOver(event -> {
             if (event.getGestureSource() != dragAndDropField && event.getDragboard().hasFiles()) {
-                event.acceptTransferModes(javafx.scene.input.TransferMode.COPY);
+                event.acceptTransferModes(TransferMode.COPY);
             }
             event.consume();
         });
@@ -171,7 +172,7 @@ public class HelloController {
                     + " (Yeni Boyut: " + newWidth + "x" + newHeight + ")");
         }
 
-        executorService.submit(() -> convertMediaFile(filePath, outputFilePath, selectedOutputFormat));
+        executorService.submit(() -> convertMediaFile(filePath, outputFilePath));
     }
 
     private String generateOutputFilePath(String inputFilePath, String outputFormat) {
@@ -188,17 +189,19 @@ public class HelloController {
         return outputFilePath;
     }
 
-    private void convertMediaFile(String inputFilePath, String outputFilePath, String format) {
+    private void convertMediaFile(String inputFilePath, String outputFilePath) {
         try {
-            String ffmpegCommand;
+            String ffmpegCommand = "";
 
-            if (outputFilePath.endsWith(".png") || outputFilePath.endsWith(".jpeg") || outputFilePath.endsWith(".bmp")) {
+            if (outputFilePath.endsWith(".png") || outputFilePath.endsWith(".jpeg") || outputFilePath.endsWith(".bmp") 
+            || outputFilePath.endsWith(".tiff") || outputFilePath.endsWith(".webp") || outputFilePath.endsWith(".jpg")) {
                 String newWidth = newWidthField.getText().trim();
                 String newHeight = newHeightField.getText().trim();
                 ffmpegCommand = !newWidth.isEmpty() && !newHeight.isEmpty()
                         ? String.format("ffmpeg -i \"%s\" -vf scale=%s:%s \"%s\"", inputFilePath, newWidth, newHeight, outputFilePath)
                         : String.format("ffmpeg -i \"%s\" \"%s\"", inputFilePath, outputFilePath);
-            } else {
+            } else if (outputFilePath.endsWith(".avi") || outputFilePath.endsWith(".mp4") || outputFilePath.endsWith(".mov")
+            || outputFilePath.endsWith(".flv")) {
                 String resolution = resolutionChoiceBox.getValue();
                 String quality = qualityChoiceBox.getValue();
 
